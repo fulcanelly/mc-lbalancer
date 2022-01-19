@@ -69,6 +69,7 @@ class ServerOnlineChecker {
         queue.add(ping != null ? 1 : 0);
     }
 
+    @SneakyThrows
     boolean check() {
         var sinfos = server.getServers();
 
@@ -79,7 +80,7 @@ class ServerOnlineChecker {
         var list = new ArrayList<Integer>();
 
         for (int i = 0; i < sinfos.size(); i ++ ) {
-            list.add(queue.poll()); 
+            list.add(queue.take()); 
         }
 
         return 1 == list.stream()
