@@ -141,18 +141,15 @@ class Server {
 
     void dispatch(Socket socket) {
         var sio = new SmartIO(socket);
-        var queue = new LinkedBlockingQueue<>();
-        var semaph = new Semaphore(1);
-
+        var queue = new ArrayBlockingQueue<>(1);
         var alive = new AtomicBoolean(true);
                  
         new Thread(new Runnable() {
             @SneakyThrows
             public void run() {
                 while (alive.get()) {
-                    semaph.acquire();
                     sleep(2000);
-                    semaph.release();           
+                    queue.put(1);
                 }
             }
         }).start();
@@ -161,15 +158,10 @@ class Server {
 
         try {
             while (true) {
-                semaph.release();
                 sio.println(
                     map.getOrDefault(sio.gets(), () -> "null").get()
                 );
-                
-                semaph.acquire();
-                var upd = System.currentTimeMillis();
-                System.out.println(upd - start);
-                start = upd;
+                queue.take();
             }
         } catch(Exception e) {
             e.printStackTrace();
