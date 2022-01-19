@@ -64,27 +64,34 @@ update _ (Few _) event =
 toEvent n = if n == 0 then Empty else Few n
 
 fetchEvent = connect "localhost" "1344" onConn where
-    runConn :: Handle -> State -> Int -> IO ()
-    runConn h state time = do 
-        h `hPutStrLn` "get_online"
-        event <- toEvent . read <$> hGetLine h
-       
-      --  state <- update Ctx{10, diff'} event state 
-
-        time' <- getTime
-        let diff' = time' - time
-        
-        print state 
-        putStrLn $ "got: " <> show event
-        putStrLn $ "time took: " <> show diff'
-       
-        state <- update (Ctx maxWaitSec diff') event state  
-
-        runConn h state time' 
-
     onConn (socket, addr) = do
         h <- socketToHandle socket ReadWriteMode         
-        runConn h Off =<< getTime
+        sstate <- setupState h
+        runConn h sstate =<< getTime
+
+setupState h = do 
+    h `hPutStrLn` "is_running"
+    run <- hGetLine h
+    pure $ case run of
+        "true" -> On
+        _ -> Off
+
+runConn :: Handle -> State -> Int -> IO ()
+runConn h state time = do 
+    h `hPutStrLn` "get_online"
+    event <- toEvent . read <$> hGetLine h 
+
+    time' <- getTime
+    let diff' = time' - time
+    
+    print state 
+    putStrLn $ "got: " <> show event
+    putStrLn $ "time took: " <> show diff'
+   
+    state <- update (Ctx maxWaitSec diff') event state  
+
+    runConn h state time' 
+
 
 getTime = round <$> getPOSIXTime
 
