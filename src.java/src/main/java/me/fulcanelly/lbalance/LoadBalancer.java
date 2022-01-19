@@ -6,13 +6,18 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
+
+import com.google.common.base.Supplier;
 
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -88,11 +93,11 @@ class ServerOnlineChecker {
     }
 }
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 class Server {
    
-    ServerSocket server; 
-    ProxyServer proxy;
+    final ServerSocket server; 
+    final ProxyServer proxy;
 
     @SneakyThrows
     public Socket accept() {
@@ -127,6 +132,13 @@ class Server {
         Thread.sleep(pause);
     }
 
+    final Map<String, Supplier<String>> map = 
+        Map.of(
+            "get_online", this::getOnline,
+            "is_running", this::isRunning
+        );
+    
+
     void dispatch(Socket socket) {
         var sio = new SmartIO(socket);
         var queue = new LinkedBlockingQueue<>();
@@ -151,11 +163,7 @@ class Server {
             while (true) {
                 semaph.release();
                 sio.println(
-                    switch (sio.gets()) {
-                    case "get_online" -> getOnline();
-                    case "is_running" -> isRunning();
-                    default -> "null";
-                    }
+                    map.getOrDefault(sio.gets(), () -> "null").get()
                 );
                 
                 semaph.acquire();
