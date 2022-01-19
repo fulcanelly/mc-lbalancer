@@ -3,14 +3,15 @@ require "socket"
 # emulate server 
 def handle(socket)
   loop do 
-    resp = socket.gets
-    case resp.split
-    in "get_online"
-      socket.puts(rand 0..10)
+    case socket.gets.chop.split
+    in "get_online", *tail
+      socket.puts(rand 0..1)
     else
       puts "unknown request"
     end
-    sleep(rand 0..10)
+    rand(0..1) => pause
+    puts "pause for #{pause}"
+    sleep(pause)
   end
 end
 
