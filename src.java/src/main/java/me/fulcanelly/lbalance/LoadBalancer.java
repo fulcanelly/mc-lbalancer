@@ -7,8 +7,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -18,13 +20,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import com.google.common.base.Supplier;
+import com.google.gson.annotations.Until;
 
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.ServerPing;
 import net.md_5.bungee.api.config.ServerInfo;
+import net.md_5.bungee.api.event.PreLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.event.EventHandler;
@@ -93,8 +98,23 @@ class ServerOnlineChecker {
     }
 }
 
+
+@UtilityClass
+class Utils {
+    @SneakyThrows
+    void sleep(long pause) {
+        Thread.sleep(pause);
+    }
+
+    @SneakyThrows
+    void putOne(BlockingQueue<? super Object> queue) {
+        queue.put(1);
+    }
+
+}
+
 @RequiredArgsConstructor
-class Server {
+class Server implements Listener {
    
     final ServerSocket server; 
     final ProxyServer proxy;
@@ -127,30 +147,25 @@ class Server {
         return String.valueOf(res);
     }
 
-    @SneakyThrows
-    void sleep(long pause) {
-        Thread.sleep(pause);
-    }
-
     final Map<String, Supplier<String>> map = 
         Map.of(
             "get_online", this::getOnline,
             "is_running", this::isRunning
         );
     
+    final List<BlockingQueue<Object>> conns = new LinkedList<>();
 
     void dispatch(Socket socket) {
         var sio = new SmartIO(socket);
         var queue = new ArrayBlockingQueue<>(1);
         var alive = new AtomicBoolean(true);
-                 
-        new Thread(new Runnable() {
-            @SneakyThrows
-            public void run() {
-                while (alive.get()) {
-                    sleep(2000);
-                    queue.put(1);
-                }
+   
+        conns.add(queue);
+        
+        new Thread(() -> {
+            while (alive.get()) {
+                Utils.sleep(2000);
+                Utils.putOne(queue);
             }
         }).start();
         
@@ -162,32 +177,45 @@ class Server {
                     map.getOrDefault(sio.gets(), () -> "null").get()
                 );
                 queue.take();
+                var upd = System.currentTimeMillis();
+                System.out.println(upd - start);
+                start = upd;
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            conns.remove(queue);
             alive.set(false);
         }
     }
+    
+    
+    @EventHandler
+    public void onPreLogin(PreLoginEvent event) {
+        conns.parallelStream()
+            .forEach(Utils::putOne);
+    }
+
+    Server setListener(Plugin plugin) {
+        proxy.getPluginManager()
+            .registerListener(plugin, this);
+        return this;
+    }
+
 }
 
-public class LoadBalancer extends Plugin implements Listener {
-   
-
-    void ping(ServerPing ping, Throwable t) {
-        System.out.println("== got ping");
-        System.out.println(ping);
-        System.out.println(t);
-    }
+public class LoadBalancer extends Plugin implements Listener {    
     
-    @SneakyThrows
-    void start() {
-        new Server(new ServerSocket(1344), this.getProxy())
-            .start();;
-    }
-
     @Override @SneakyThrows
     public void onEnable() {
-        new Thread(this::start).start();
+        var server = new Server(
+                new ServerSocket(1344), this.getProxy());
+
+        new Thread(server::start).start();
+
+        this.getProxy().getPluginManager()
+            .registerListener(this, this);
+
         this.getLogger().info("kinda balancing");
     }
 }
