@@ -25,12 +25,12 @@ data Event
 data State 
     = Off 
     | On 
-    | Waiting Sec
+    | Waiting Double
     deriving Show 
 
 data Context = Ctx {
         maxT :: Int 
-        , diff :: Int
+        , diff :: Double
     } deriving Show 
 
 stopServer = do
@@ -47,7 +47,7 @@ update Ctx{..} Empty event =
     Off -> pure Off
     On -> pure $ Waiting diff
     Waiting sec -> 
-        if sec > maxT then do 
+        if round sec > maxT then do 
             stopServer 
             pure Off 
         else
@@ -76,7 +76,7 @@ setupState h = do
         "true" -> On
         _ -> Off
 
-runConn :: Handle -> State -> Int -> IO ()
+runConn :: Handle -> State -> Double -> IO ()
 runConn h state time = do 
     h `hPutStrLn` "get_online"
     event <- toEvent . read <$> hGetLine h 
@@ -93,7 +93,9 @@ runConn h state time = do
     runConn h state time' 
 
 
-getTime = round <$> getPOSIXTime
+getTime :: IO Double 
+getTime = realToFrac <$> getPOSIXTime
+
 
 main :: IO ()
 main = do
