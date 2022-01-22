@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import com.google.common.base.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import me.fulcanelly.lbalance.config.Config;
 import net.md_5.bungee.api.ProxyServer;
 
 import net.md_5.bungee.api.event.PreLoginEvent;
@@ -35,6 +36,7 @@ public class Server implements Listener {
    
     final ServerSocket server; 
     final ProxyServer proxy;
+    final Config config;
 
     @SneakyThrows
     public Socket accept() {
@@ -61,7 +63,7 @@ public class Server implements Listener {
 
     boolean isRunning() {
         return new ServerOnlineChecker(proxy)
-            .check();    
+            .checkExcluding(config.getLobby());    
     }
 
     final BlockingQueue<BlockingQueue<Object>> conns = new LinkedBlockingQueue<>();
