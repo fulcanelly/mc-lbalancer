@@ -43,7 +43,7 @@ startSever = do
     putStrLn <$> readProcess "sh" ["/home/minecraft/server/mine/start.sh" ] []
     putStrLn "==> starting"
 
-maxWaitSec = 5 
+maxWaitSec = 60 * 60
 
 update :: Context -> Event -> State -> IO State 
 update Ctx{..} Empty event =
