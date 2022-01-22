@@ -12,13 +12,13 @@ import net.md_5.bungee.api.plugin.Plugin;
 
 @AllArgsConstructor
 public class ConfigLoader<T> {
-    
+
     Plugin plugin;
     Class<T> clazz;
 
 
     @SneakyThrows
-    T load() {
+    public T load() {
         var folder = plugin.getDataFolder();
         folder.mkdir();
 
