@@ -13,6 +13,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -66,7 +67,7 @@ public class Server implements Listener {
             .checkExcluding(config.getLobby());    
     }
 
-    final BlockingQueue<BlockingQueue<Object>> conns = new LinkedBlockingQueue<>();
+    final BlockingQueue<Semaphore> conns = new LinkedBlockingQueue<>();
 
     Object dispatch(String input) {
         return switch (input) {
@@ -80,15 +81,15 @@ public class Server implements Listener {
     @SneakyThrows
     void runWith(Socket socket) {
         var sio = new SmartIO(socket);
-        var queue = new ArrayBlockingQueue<>(1);
         var alive = new AtomicBoolean(true);
-   
-        conns.put(queue);
+        var sem = new Semaphore(0);
+
+        conns.put(sem);
         
         new Thread(() -> {
             while (alive.get()) {
                 Utils.sleep(2000);
-                Utils.putOne(queue);
+                sem.release();
             }
         }).start();
         
@@ -99,7 +100,7 @@ public class Server implements Listener {
                 sio.println(
                     dispatch(sio.gets()).toString()
                 );
-                queue.take();
+                sem.acquire();
 
                 var upd = System.currentTimeMillis();
                 System.out.println(upd - start);
@@ -108,7 +109,7 @@ public class Server implements Listener {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            conns.remove(queue);
+            conns.remove(sem);
             alive.set(false);
         }
     }
@@ -117,7 +118,7 @@ public class Server implements Listener {
     @EventHandler
     public void onPreLogin(PreLoginEvent event) {
         conns.parallelStream()
-            .forEach(Utils::putOne);
+            .forEach(Semaphore::release);
     }
 
     public Server setListener(Plugin plugin) {
