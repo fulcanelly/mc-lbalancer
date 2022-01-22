@@ -7,4 +7,6 @@ import lombok.ToString;
 public class Config {
     
     private String lobby = "lobby";
+    private int interval = 2000;
+
 }

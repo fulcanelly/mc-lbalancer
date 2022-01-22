@@ -88,7 +88,7 @@ public class Server implements Listener {
         
         new Thread(() -> {
             while (alive.get()) {
-                Utils.sleep(2000);
+                Utils.sleep(config.getInterval());
                 sem.release();
             }
         }).start();
