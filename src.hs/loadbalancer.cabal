@@ -34,6 +34,7 @@ library
     , bytestring
     , network
     , network-simple
+    , process
     , time
   default-language: Haskell2010
 
@@ -50,6 +51,7 @@ executable loadbalancer-exe
     , loadbalancer
     , network
     , network-simple
+    , process
     , time
   default-language: Haskell2010
 
@@ -67,5 +69,6 @@ test-suite loadbalancer-test
     , loadbalancer
     , network
     , network-simple
+    , process
     , time
   default-language: Haskell2010

@@ -25,6 +25,7 @@ dependencies:
 - network
 - time
 - bytestring
+- process
 
 library:
   source-dirs: src

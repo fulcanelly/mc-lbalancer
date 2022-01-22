@@ -14,6 +14,7 @@ import Control.Monad (forever, guard)
 import Network.Socket (socketToHandle)
 
 import System.IO
+import System.Process
 
 type Sec = Int
 
@@ -34,9 +35,12 @@ data Context = Ctx {
     } deriving Show 
 
 stopServer = do
+    
+    putStrLn <$> (readProcess "tmux" ["kill-session", "-t", "main"] [])
     putStrLn "==> stopping"
 
 startSever = do
+    putStrLn <$> readProcess "sh" ["/home/minecraft/server/mine/start.sh" ] []
     putStrLn "==> starting"
 
 maxWaitSec = 5 
