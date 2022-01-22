@@ -1,6 +1,8 @@
 package me.fulcanelly.lbalance;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
@@ -17,4 +19,7 @@ public class Utils {
         queue.put(1);
     }
 
+    <T, K> Function<T, K> const_(Supplier<K> supp) {
+        return ___ -> supp.get();
+    }
 }
