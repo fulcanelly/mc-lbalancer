@@ -29,11 +29,6 @@ public class ServerOnlineChecker {
     }
 
     @SneakyThrows
-    boolean take() {
-        return queue.take();
-    }
-
-    @SneakyThrows
     boolean check() {
         var sinfos = server.getServers();
 
@@ -42,7 +37,7 @@ public class ServerOnlineChecker {
 
         return IntStream.range(0, sinfos.size())
             .boxed()
-            .map(const_(this::take))
+            .map(const_(queue::take))
             .reduce(true, (a, b) -> a && b);
     }
 }
