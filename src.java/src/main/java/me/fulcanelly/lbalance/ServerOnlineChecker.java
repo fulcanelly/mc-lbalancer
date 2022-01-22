@@ -6,21 +6,31 @@ import java.util.ArrayList;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.IntStream;
+
+import com.google.common.base.Function;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.ServerPing;
 
+import static me.fulcanelly.lbalance.Utils.*;
+
 @RequiredArgsConstructor
 public class ServerOnlineChecker {
     
     final ProxyServer server;
 
-    BlockingQueue<Integer> queue = new LinkedBlockingQueue<>();
+    BlockingQueue<Boolean> queue = new LinkedBlockingQueue<>();
 
     void acceptPing(ServerPing ping, Throwable t) {
-        queue.add(ping != null ? 1 : 0);
+        queue.add(ping != null);
+    }
+
+    @SneakyThrows
+    boolean take() {
+        return queue.take();
     }
 
     @SneakyThrows
@@ -29,15 +39,10 @@ public class ServerOnlineChecker {
 
         sinfos.values()
             .forEach(s -> s.ping(this::acceptPing));
-       
-        
-        var list = new ArrayList<Integer>();
 
-        for (int i = 0; i < sinfos.size(); i ++ ) {
-            list.add(queue.take()); 
-        }
-
-        return 1 == list.stream()
-            .reduce(1, (a, b) -> a * b);
+        return IntStream.range(0, sinfos.size())
+            .boxed()
+            .map(const_(this::take))
+            .reduce(true, (a, b) -> a && b);
     }
 }
