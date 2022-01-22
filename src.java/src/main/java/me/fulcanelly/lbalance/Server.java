@@ -8,10 +8,14 @@ import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.google.common.base.Supplier;
@@ -46,29 +50,38 @@ public class Server implements Listener {
     public void start() {
         Stream.generate(this::accept)
             .peek(this::setSoTimeout)
-            .map(conn -> new Thread(() -> dispatch(conn)))
+            .<Runnable>map(sock -> () -> runWith(sock))
+            .map(Thread::new)
             .forEach(Thread::start);
     }
 
-    String getOnline() {
-        return String.valueOf(proxy.getOnlineCount());
+    int getOnline() {
+        return proxy.getOnlineCount();
     }
 
-    String isRunning() {
-        var res = new ServerOnlineChecker(proxy)
+    boolean isRunning() {
+        return new ServerOnlineChecker(proxy)
             .check();    
-        return String.valueOf(res);
     }
 
-    
-    final List<BlockingQueue<Object>> conns = new LinkedList<>();
+    final BlockingQueue<BlockingQueue<Object>> conns = new LinkedBlockingQueue<>();
 
-    void dispatch(Socket socket) {
+    Object dispatch(String input) {
+        return switch (input) {
+            case "get_online" -> getOnline();
+            case "is_running" -> isRunning();
+            default -> "null";
+        };
+    }
+
+
+    @SneakyThrows
+    void runWith(Socket socket) {
         var sio = new SmartIO(socket);
         var queue = new ArrayBlockingQueue<>(1);
         var alive = new AtomicBoolean(true);
    
-        conns.add(queue);
+        conns.put(queue);
         
         new Thread(() -> {
             while (alive.get()) {
@@ -82,13 +95,10 @@ public class Server implements Listener {
         try {
             while (true) {
                 sio.println(
-                    switch (sio.gets()) {
-                        case "get_online" -> getOnline();
-                        case "is_running" -> isRunning();
-                        default -> "null";
-                    }
+                    dispatch(sio.gets()).toString()
                 );
                 queue.take();
+
                 var upd = System.currentTimeMillis();
                 System.out.println(upd - start);
                 start = upd;
