@@ -7,6 +7,24 @@ import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
+
+
+
+interface UnsafeSupplier<E extends Exception, T> {
+    T apply() throws E;
+
+    default Supplier<T> toSupplier() {
+        return new Supplier<T>() {
+
+            @Override @SneakyThrows
+            public T get() {
+                return apply();
+            }
+            
+        };
+    }
+}
+
 @UtilityClass
 public class Utils {
     @SneakyThrows
@@ -19,7 +37,7 @@ public class Utils {
         queue.put(1);
     }
 
-    <T, K> Function<T, K> const_(Supplier<K> supp) {
-        return ___ -> supp.get();
+    <E extends Exception, T, K> Function<T, K> const_(UnsafeSupplier<E, K> supp) {
+        return ___ -> supp.toSupplier().get();
     }
 }
