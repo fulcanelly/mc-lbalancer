@@ -60,11 +60,6 @@ public class Server implements Listener {
         return String.valueOf(res);
     }
 
-    final Map<String, Supplier<String>> map = 
-        Map.of(
-            "get_online", this::getOnline,
-            "is_running", this::isRunning
-        );
     
     final List<BlockingQueue<Object>> conns = new LinkedList<>();
 
@@ -87,7 +82,11 @@ public class Server implements Listener {
         try {
             while (true) {
                 sio.println(
-                    map.getOrDefault(sio.gets(), () -> "null").get()
+                    switch (sio.gets()) {
+                        case "get_online" -> getOnline();
+                        case "is_running" -> isRunning();
+                        default -> "null";
+                    }
                 );
                 queue.take();
                 var upd = System.currentTimeMillis();
