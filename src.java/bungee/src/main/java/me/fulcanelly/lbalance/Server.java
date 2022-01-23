@@ -14,31 +14,60 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.google.common.base.Supplier;
+
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import me.fulcanelly.lbalance.config.Config;
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
-
+import net.md_5.bungee.api.event.LoginEvent;
+import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.event.PreLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.api.scheduler.ScheduledTask;
 import net.md_5.bungee.event.EventHandler;
 
 
-
+@Builder
 @RequiredArgsConstructor
 public class Server implements Listener {
    
     final ServerSocket server; 
     final ProxyServer proxy;
     final Config config;
+    final Plugin plugin;
 
+    @EventHandler
+    public void onLogin(PostLoginEvent event) {
+
+        AtomicReference<ScheduledTask> task = new AtomicReference<>();
+        var player = event.getPlayer();
+
+        // Object task = 1;
+        task.set(
+            proxy.getScheduler()
+                .schedule(plugin, () -> {
+                    if (isRunning() || !player.isConnected()) {
+                        task.get().cancel();
+                    } else {
+                        player.sendMessage(
+                                 ChatColor.GREEN + "Server is starting. wait..."
+                                );
+                    }
+                }, 0L, 3L, TimeUnit.SECONDS)
+            );
+    }
+    
     @SneakyThrows
     public Socket accept() {
         return server.accept(); 
@@ -121,7 +150,7 @@ public class Server implements Listener {
             .forEach(Semaphore::release);
     }
 
-    public Server setListener(Plugin plugin) {
+    public Server setListener() {
         proxy.getPluginManager()
             .registerListener(plugin, this);
         return this;
