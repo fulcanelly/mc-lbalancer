@@ -14,6 +14,8 @@ import Control.Monad (forever, guard)
 import Network.Socket (socketToHandle)
 
 import System.IO
+import Control.Exception.Base (catch, SomeException)
+import GHC.Conc.IO (threadDelay)
 
 type Sec = Int
 
@@ -96,8 +98,14 @@ runConn h state time = do
 getTime :: IO Double 
 getTime = realToFrac <$> getPOSIXTime
 
+catchS :: IO a -> (SomeException -> IO a) -> IO a
+catchS = catch
 
 main :: IO ()
 main = do
-    let time = round <$> getPOSIXTime
     fetchEvent
+    `catchS` \x -> do
+        print x 
+        putStrLn "got excpetion. trying rerun"
+        threadDelay $ 1000 * 3000
+        main
