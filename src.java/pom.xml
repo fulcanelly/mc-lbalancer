@@ -37,6 +37,13 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.30</version>
+            <scope>compile</scope>
+
+        </dependency>
+        <dependency>
             <groupId>net.md-5</groupId>
             <artifactId>bungeecord-api</artifactId>
             <version>1.16-R0.5-SNAPSHOT</version>
@@ -64,8 +71,8 @@
             <configuration>
                 <relocations>
                     <relocation>
-                        <pattern>com.google.inject</pattern>
-                        <shadedPattern>com.google.inject.tg_bridge_shaded</shadedPattern>
+                        <pattern>org.yaml.snakeyaml</pattern>
+                        <shadedPattern>org.yaml.snakeyaml.1mc_balancer</shadedPattern>
                     </relocation>
                     </relocations>
                 <filters>
