@@ -18,9 +18,14 @@ public class LoadBalancer extends Plugin {
         ssocket = new ServerSocket(1344);
         var configLoader = new ConfigLoader<Config>(this, Config.class);
         new Thread(
-            new Server(ssocket, this.getProxy(), configLoader.load())
-                .setListener(this)
-                ::start).start();
+            Server.builder()
+                    .server(ssocket)
+                    .plugin(this)
+                    .config(configLoader.load())
+                    .proxy(this.getProxy())
+                .build()
+            .setListener()
+               ::start).start();
            
         this.getLogger().info("kinda balancing");
     }
