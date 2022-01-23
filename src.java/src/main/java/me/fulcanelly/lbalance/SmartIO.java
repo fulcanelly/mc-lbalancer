@@ -32,7 +32,12 @@ public class SmartIO {
 
     @SneakyThrows
     public String gets() {
-        return in.readLine();
+        var line = in.readLine();
+        if (line == null) {
+            throw new LostConnection();
+        }
+        
+        return line;
     }
 
     @SneakyThrows
