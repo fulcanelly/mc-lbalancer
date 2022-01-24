@@ -7,7 +7,7 @@ This is a tool to make minecraft server work only when it's really needed, by wa
 
 ### How it works ?
 
-Currently it have only one mode — **all to one**, it means all servers depends from one (in conifg it called lobby).
+Currently it have only one mode — **all to one**, it means all servers depends from one ([in conifg](src.java/bungee/src/main/resources/config.yml) it called lobby).
 If that server is empty — dependent servers will eventually shutdown, if at least one player enter it — dependent will start.
 
 
