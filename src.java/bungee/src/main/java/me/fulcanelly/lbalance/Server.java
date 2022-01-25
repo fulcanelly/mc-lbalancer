@@ -131,9 +131,11 @@ public class Server implements Listener {
                 );
                 sem.acquire();
 
-                var upd = System.currentTimeMillis();
-                System.out.println(upd - start);
-                start = upd;
+                if (config.isVerbose()) {
+                    var upd = System.currentTimeMillis();
+                    System.out.println(upd - start);
+                    start = upd;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

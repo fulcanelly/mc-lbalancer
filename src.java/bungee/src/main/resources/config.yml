@@ -1,2 +1,4 @@
 lobby: lobby
 interval: 2500
+verbose: false
+  

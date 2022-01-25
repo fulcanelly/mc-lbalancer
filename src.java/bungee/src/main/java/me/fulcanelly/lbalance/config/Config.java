@@ -8,5 +8,6 @@ public class Config {
     
     private String lobby = "lobby";
     private int interval = 2000;
+    private boolean verbose = false;
 
 }
