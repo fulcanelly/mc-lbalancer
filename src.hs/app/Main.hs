@@ -63,15 +63,24 @@ update _ (Few _) event =
     _ -> pure On 
 
 
+type TrackedState = State 
+type FetchedState = State
+
+adjust :: FetchedState -> TrackedState -> State 
+adjust Off _ = Off
+
+adjust On Off = On 
+adjust _ s = s
+
 toEvent n = if n == 0 then Empty else Few n
 
 fetchEvent = connect "localhost" "1344" onConn where
     onConn (socket, addr) = do
         h <- socketToHandle socket ReadWriteMode         
-        sstate <- setupState h
+        sstate <- getState h
         runConn h sstate =<< getTime
 
-setupState h = do 
+getState h = do 
     h `hPutStrLn` "is_running"
     run <- hGetLine h
     pure $ case run of
@@ -91,8 +100,9 @@ runConn h state time = do
     putStrLn $ "time took: " <> show diff'
    
     state <- update (Ctx maxWaitSec diff') event state  
+    state' <- adjust <$> getState h <*> pure state
 
-    runConn h state time' 
+    runConn h state' time' 
 
 
 getTime :: IO Double 
