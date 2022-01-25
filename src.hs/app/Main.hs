@@ -87,10 +87,14 @@ getState h = do
         "true" -> On
         _ -> Off
 
+getOnline h = do
+     h `hPutStrLn` "get_online"            
+     read <$> hGetLine h
+ 
+
 runConn :: Handle -> State -> Double -> IO ()
-runConn h state time = do 
-    h `hPutStrLn` "get_online"
-    event <- toEvent . read <$> hGetLine h 
+runConn h state time = do
+    event <- toEvent . read <$> getOnline h
 
     time' <- getTime
     let diff' = time' - time
