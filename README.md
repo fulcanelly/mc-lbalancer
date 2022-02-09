@@ -19,3 +19,4 @@ If that server is empty — dependent servers will eventually shutdown, if at le
 ### Future plans 
 
 * Currently only one watched server is permitted and rest considered as it's dependent, so that is things to work on.
+* Add prediction of online for enabling server in advance 
