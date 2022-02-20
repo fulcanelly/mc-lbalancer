@@ -4,7 +4,12 @@
 
 This is a tool to make minecraft server work only when it's really needed, by watching proxy connections
 
+### Motivation 
 
+* Some hostings take payments only for uptime.
+* Some actions (like a backup) require the server to be off for a continuous time. The plugin dedicated to detect that time
+* If you running a few servers on the same machine you can reduce needless load using this
+ 
 ### How it works ?
 
 Currently it have only one mode — **all to one**, it means all servers depends from one ([in conifg](src.java/bungee/src/main/resources/config.yml) it called lobby).
